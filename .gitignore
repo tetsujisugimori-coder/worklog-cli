@@ -1,0 +1,9 @@
+# build output
+*.exe
+
+# Codex temporary files
+.codex-*.txt
+.codex-bom-test
+
+# runtime data
+log.csv
