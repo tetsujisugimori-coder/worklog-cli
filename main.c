@@ -8,7 +8,22 @@
 
 #define MAX_LOGS 1000
 #define MAX_CATEGORIES 100
+#define CATEGORY_COUNT 11
 #define CSV_FILE "log.csv"
+
+const char *CATEGORIES[CATEGORY_COUNT] = {
+    "妄想",
+    "構想",
+    "設計",
+    "実装",
+    "調査",
+    "検証",
+    "修正",
+    "整理",
+    "記録",
+    "学習",
+    "その他"
+};
 
 typedef struct {
     char date[20];
@@ -28,6 +43,7 @@ void readLine(char prompt[], char buffer[], int size);
 int isEmpty(char str[]);
 void printMenu(void);
 void addWorkLog(void);
+int selectCategory(char buffer[], int size);
 int loadLogs(WorkLog logs[], int maxLogs);
 void showLogsByDate(void);
 void showCategorySummary(void);
@@ -126,7 +142,10 @@ void addWorkLog(void) {
     ensureCsvBom();
 
     readLine("日付を入力してください 例: 2026-06-13", log.date, sizeof(log.date));
-    readLine("カテゴリを入力してください", log.category, sizeof(log.category));
+    if (!selectCategory(log.category, sizeof(log.category))) {
+        printf("カテゴリが正しくないため、保存しませんでした。\n");
+        return;
+    }
     readLine("作業内容を入力してください", log.content, sizeof(log.content));
     readLine("作業時間を分で入力してください", minutesInput, sizeof(minutesInput));
 
@@ -149,6 +168,44 @@ void addWorkLog(void) {
     fclose(file);
 
     printf("保存しました。\n");
+}
+
+int selectCategory(char buffer[], int size) {
+    char input[20];
+    char *end;
+    long choice;
+    int i;
+
+    printf("カテゴリを選んでください:\n");
+    for (i = 0; i < CATEGORY_COUNT; i++) {
+        printf("%d. %s\n", i + 1, CATEGORIES[i]);
+    }
+    printf("> ");
+
+    if (fgets(input, sizeof(input), stdin) == NULL) {
+        buffer[0] = '\0';
+        return 0;
+    }
+
+    removeNewline(input);
+    if (isEmpty(input)) {
+        buffer[0] = '\0';
+        return 0;
+    }
+
+    choice = strtol(input, &end, 10);
+    if (*end != '\0' || choice < 1 || choice > CATEGORY_COUNT) {
+        buffer[0] = '\0';
+        return 0;
+    }
+
+    if ((int)strlen(CATEGORIES[choice - 1]) >= size) {
+        buffer[0] = '\0';
+        return 0;
+    }
+
+    strcpy(buffer, CATEGORIES[choice - 1]);
+    return 1;
 }
 
 int loadLogs(WorkLog logs[], int maxLogs) {
